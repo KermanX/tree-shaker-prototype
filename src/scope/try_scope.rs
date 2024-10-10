@@ -1,5 +1,6 @@
 use crate::{
   analyzer::Analyzer,
+  consumable::{box_consumable, ConsumableNode},
   entity::{Entity, ForwardedEntity, UnknownEntity},
 };
 
@@ -18,7 +19,11 @@ impl<'a> TryScope<'a> {
 
   pub fn thrown_val(self) -> Option<Entity<'a>> {
     // Always unknown here
-    self.may_throw.then(|| UnknownEntity::new_computed_unknown(self.thrown_values))
+    self.may_throw.then(|| {
+      UnknownEntity::new_computed_unknown(box_consumable(ConsumableNode::new_box(
+        self.thrown_values,
+      )))
+    })
   }
 }
 
@@ -55,17 +60,18 @@ impl<'a> Analyzer<'a> {
     if values.is_empty() {
       self.may_throw();
     } else {
-      let thrown_val = UnknownEntity::new_computed_unknown(values);
+      let thrown_val =
+        UnknownEntity::new_computed_unknown(box_consumable(ConsumableNode::new_box(values)));
       self.explicit_throw_impl(thrown_val);
     }
   }
 
   fn explicit_throw_impl(&mut self, value: Entity<'a>) {
     let try_scope = self.try_scope();
-    let exec_dep = self.get_exec_dep(try_scope.cf_scope_depth, ());
+    let exec_dep = self.get_exec_dep(try_scope.cf_scope_depth);
 
     let try_scope = self.try_scope_mut();
     try_scope.may_throw = true;
-    try_scope.thrown_values.push(ForwardedEntity::new(value, exec_dep));
+    try_scope.thrown_values.push(ForwardedEntity::new(value, box_consumable(exec_dep)));
   }
 }
