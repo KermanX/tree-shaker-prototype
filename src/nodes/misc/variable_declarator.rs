@@ -1,9 +1,4 @@
-use crate::{
-  analyzer::Analyzer,
-  ast::DeclarationKind,
-  entity::{Entity, ForwardedEntity},
-  transformer::Transformer,
-};
+use crate::{analyzer::Analyzer, ast::DeclarationKind, entity::Entity, transformer::Transformer};
 use oxc::{
   ast::{ast::VariableDeclarator, AstKind},
   span::GetSpan,
@@ -35,7 +30,7 @@ impl<'a> Analyzer<'a> {
       }
       None => node.init.as_ref().map(|init| {
         let val = self.exec_expression(init);
-        ForwardedEntity::new(val, AstKind::VariableDeclarator(node))
+        self.factory.new_computed(val, AstKind::VariableDeclarator(node))
       }),
     };
 
